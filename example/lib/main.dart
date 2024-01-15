@@ -76,9 +76,23 @@ class _MyAppState extends State<MyApp> {
     final pickedFile = await _remuxSharedStoragePlugin.openDirectoryPicker();
 
     if (pickedFile != null) {
-      final fileSize =
-          await _remuxSharedStoragePlugin.getUniqueFileName(pickedFile, "fileNameThing", "mkv");
+      final fileSize = await _remuxSharedStoragePlugin.getUniqueFileName(
+        pickedFile,
+        "fileNameThing",
+        "mkv",
+      );
       print("getUniqueFileName: $fileSize");
+    } else {
+      print('No file picked');
+    }
+  }
+
+  Future<void> getFileName() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
+
+    if (pickedFile.isNotEmpty) {
+      final fileName = await _remuxSharedStoragePlugin.getFileName(pickedFile.first);
+      print("getFileName: $fileName");
     } else {
       print('No file picked');
     }
@@ -132,7 +146,13 @@ class _MyAppState extends State<MyApp> {
                     child: const Text("Get unique file name"),
                   ),
                 ],
-              )
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  getFileName();
+                },
+                child: const Text("Get file name"),
+              ),
             ],
           ),
         ),

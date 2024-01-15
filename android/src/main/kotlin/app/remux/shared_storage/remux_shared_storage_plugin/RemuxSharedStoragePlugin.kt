@@ -73,6 +73,16 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
+        } else if (call.method == "getFileName")  {
+            this.result = result
+
+            val fileUri = call.argument<String>("fileUri")
+
+            if (fileUri != null) {
+                getFileName(activity!!.contentResolver, Uri.parse(fileUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
         } else {
             result.notImplemented()
         }
@@ -149,6 +159,20 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             }
         }
         return false
+    }
+
+    private fun getFileName(contentResolver: ContentResolver, fileUri: Uri) {
+        val cursor = contentResolver.query(fileUri, null, null, null, null)
+        var fileName: String? = null
+
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val nameIndex = it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                fileName = it.getString(nameIndex)
+            }
+        }
+
+        result?.success(fileName)
     }
 
 

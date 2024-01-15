@@ -48,4 +48,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result;
   }
+
+  @override
+  Future<String?> getFileName(String fileUri) async {
+    final result = await methodChannel.invokeMethod<String>('getFileName', <String, dynamic>{
+      'fileUri': fileUri,
+    });
+    return result;
+  }
 }
