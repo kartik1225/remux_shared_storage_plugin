@@ -98,6 +98,17 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> getDirectoryName() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openDirectoryPicker();
+
+    if (pickedFile != null) {
+      final directoryName = await _remuxSharedStoragePlugin.getDirectoryName(pickedFile);
+      print("getDirectoryName: $directoryName");
+    } else {
+      print('No file picked');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -147,11 +158,21 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ],
               ),
-              ElevatedButton(
-                onPressed: () {
-                  getFileName();
-                },
-                child: const Text("Get file name"),
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      getFileName();
+                    },
+                    child: const Text("Get file name"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      getDirectoryName();
+                    },
+                    child: const Text("Get directory name"),
+                  ),
+                ],
               ),
             ],
           ),

@@ -46,4 +46,8 @@ abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
   Future<String?> getFileName(String fileUri) {
     throw UnimplementedError('getFileName() has not been implemented.');
   }
+
+  Future<String?> getDirectoryName(String directoryUri) {
+    throw UnimplementedError('getDirectoryName() has not been implemented.');
+  }
 }

@@ -25,4 +25,8 @@ class RemuxSharedStoragePlugin {
   Future<String?> getFileName(String fileUri) {
     return RemuxSharedStoragePluginPlatform.instance.getFileName(fileUri);
   }
+
+  Future<String?> getDirectoryName(String directoryUri) {
+    return RemuxSharedStoragePluginPlatform.instance.getDirectoryName(directoryUri);
+  }
 }

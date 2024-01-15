@@ -2,8 +2,11 @@ package app.remux.shared_storage.remux_shared_storage_plugin
 
 import android.app.Activity
 import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
@@ -83,7 +86,17 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
-        } else {
+        } else if (call.method == "getDirectoryName") {
+            this.result = result
+
+            val directoryUri = call.argument<String>("directoryUri")
+
+            if (directoryUri != null) {
+                getDirectoryName(activity!!, Uri.parse(directoryUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+        } else{
             result.notImplemented()
         }
     }
@@ -175,6 +188,36 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         result?.success(fileName)
     }
 
+    private fun getDirectoryName(context: Context, uri: Uri) {
+        // Check if the URI is a tree URI (directory)
+        val isTreeUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            DocumentsContract.isTreeUri(uri)
+        } else {
+            false
+        }
+
+        val documentFile = if (isTreeUri) {
+            // If it's a tree URI, use fromTreeUri
+            DocumentFile.fromTreeUri(context, uri)
+        } else {
+            // If it's not a tree URI, it might be a file URI
+            DocumentFile.fromSingleUri(context, uri)
+        }
+
+        val directoryName = if (documentFile != null) {
+            if (documentFile.isFile) {
+                // If it's a file, get the parent directory's name
+                documentFile.parentFile?.name
+            } else {
+                // If it's a directory, get the directory's name
+                documentFile.name
+            }
+        } else {
+            null
+        }
+
+        result?.success(directoryName)
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         // directory picker

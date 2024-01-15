@@ -56,4 +56,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result;
   }
+
+  @override
+  Future<String?> getDirectoryName(String directoryUri) async {
+    final result = await methodChannel.invokeMethod<String>('getDirectoryName', <String, dynamic>{
+      'directoryUri': directoryUri,
+    });
+    return result;
+  }
 }
