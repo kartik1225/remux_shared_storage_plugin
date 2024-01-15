@@ -1,0 +1,37 @@
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+import 'remux_shared_storage_plugin_method_channel.dart';
+
+abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
+  /// Constructs a RemuxSharedStoragePluginPlatform.
+  RemuxSharedStoragePluginPlatform() : super(token: _token);
+
+  static final Object _token = Object();
+
+  static RemuxSharedStoragePluginPlatform _instance = MethodChannelRemuxSharedStoragePlugin();
+
+  /// The default instance of [RemuxSharedStoragePluginPlatform] to use.
+  ///
+  /// Defaults to [MethodChannelRemuxSharedStoragePlugin].
+  static RemuxSharedStoragePluginPlatform get instance => _instance;
+
+  /// Platform-specific implementations should set this with their own
+  /// platform-specific class that extends [RemuxSharedStoragePluginPlatform] when
+  /// they register themselves.
+  static set instance(RemuxSharedStoragePluginPlatform instance) {
+    PlatformInterface.verifyToken(instance, _token);
+    _instance = instance;
+  }
+
+  Future<String?> openDirectoryPicker() {
+    throw UnimplementedError('openDirectoryPicker() has not been implemented.');
+  }
+
+  Future<List<String>> openFilePicker() {
+    throw UnimplementedError('openFilePicker() has not been implemented.');
+  }
+
+  Future<String?> createFile(String dirUri, String fileName, String mimeType) {
+    throw UnimplementedError('createFile() has not been implemented.');
+  }
+}
