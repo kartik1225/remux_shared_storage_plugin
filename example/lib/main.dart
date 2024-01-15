@@ -70,7 +70,18 @@ class _MyAppState extends State<MyApp> {
     } else {
       print('No file picked');
     }
+  }
 
+  Future<void> getUniqueFileName() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openDirectoryPicker();
+
+    if (pickedFile != null) {
+      final fileSize =
+          await _remuxSharedStoragePlugin.getUniqueFileName(pickedFile, "fileNameThing", "mkv");
+      print("getUniqueFileName: $fileSize");
+    } else {
+      print('No file picked');
+    }
   }
 
   @override
@@ -106,10 +117,22 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("Pick dir and create file"),
               ),
-              ElevatedButton(
-                  onPressed: () {
-                    getFileSize();
-                  }, child: const Text("Get file size"))
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      getFileSize();
+                    },
+                    child: const Text("Get file size"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      getUniqueFileName();
+                    },
+                    child: const Text("Get unique file name"),
+                  ),
+                ],
+              )
             ],
           ),
         ),

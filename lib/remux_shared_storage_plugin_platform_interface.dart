@@ -38,4 +38,8 @@ abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
   Future<int?> getFileSizeFromUri(String fileUri) {
     throw UnimplementedError('getFreeSpace() has not been implemented.');
   }
+
+  Future<String?> getUniqueFileName(String directoryUri, String fileName, String fileExtension) {
+    throw UnimplementedError('getUniqueFileName() has not been implemented.');
+  }
 }

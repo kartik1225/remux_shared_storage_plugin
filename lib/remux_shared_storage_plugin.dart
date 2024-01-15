@@ -17,4 +17,8 @@ class RemuxSharedStoragePlugin {
   Future<int?> getFileSizeFromUri(String fileUri) {
     return RemuxSharedStoragePluginPlatform.instance.getFileSizeFromUri(fileUri);
   }
+
+  Future<String?> getUniqueFileName(String directoryUri, String fileName, String fileExtension) {
+    return RemuxSharedStoragePluginPlatform.instance.getUniqueFileName(directoryUri, fileName, fileExtension);
+  }
 }

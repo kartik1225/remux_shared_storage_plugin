@@ -1,8 +1,10 @@
 package app.remux.shared_storage.remux_shared_storage_plugin
 
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
 
@@ -60,6 +62,17 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null);
             }
+        } else if (call.method == "getUniqueFileName") {
+            this.result = result
+            val dirUri = call.argument<String>("directoryUri")
+            val fileName = call.argument<String>("fileName")
+            val fileExtension = call.argument<String>("fileExtension")
+
+            if (dirUri != null && fileName != null && fileExtension != null) {
+                getUniqueFileName(Uri.parse(dirUri), fileName, fileExtension)
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
         } else {
             result.notImplemented()
         }
@@ -107,6 +120,35 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         } else {
             result?.error("Activity is null", null, null)
         }
+    }
+
+    private fun getUniqueFileName(directoryUri: Uri, fileName: String, fileExtension: String) {
+        val context = activity
+        val contentResolver = context?.contentResolver
+        if (contentResolver == null) {
+            result?.error("Activity is null", null, null)
+            return
+        }
+
+        val directory = DocumentFile.fromTreeUri(context, directoryUri)
+        var uniqueFileName = "$fileName.$fileExtension"
+
+        var counter = 0
+        while (fileExists(directory, uniqueFileName)) {
+            counter++
+            uniqueFileName = "${fileName}_$counter.$fileExtension"
+        }
+
+        result?.success(uniqueFileName)
+    }
+
+    private fun fileExists(directory: DocumentFile?, fileName: String): Boolean {
+        directory?.listFiles()?.forEach { file ->
+            if (file.name == fileName) {
+                return true
+            }
+        }
+        return false
     }
 
 
