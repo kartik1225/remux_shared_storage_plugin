@@ -48,10 +48,7 @@ class _MyAppState extends State<MyApp> {
 
       if (dirUri != null) {
         final fileName =
-            "${DateTime
-            .now()
-            .millisecondsSinceEpoch
-            .toString()}.avi";
+            "${DateTime.now().millisecondsSinceEpoch.toString()}.avi";
         final createdFile = await _remuxSharedStoragePlugin.createFile(
             dirUri, fileName, "video/avi");
         print(createdFile);
@@ -61,6 +58,19 @@ class _MyAppState extends State<MyApp> {
     } on PlatformException {
       print('Failed to get picked files.');
     }
+  }
+
+  Future<void> getFileSize() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
+
+    if (pickedFile.isNotEmpty) {
+      final fileSize =
+          await _remuxSharedStoragePlugin.getFileSizeFromUri(pickedFile.first);
+      print("fileSize $fileSize");
+    } else {
+      print('No file picked');
+    }
+
   }
 
   @override
@@ -96,6 +106,10 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("Pick dir and create file"),
               ),
+              ElevatedButton(
+                  onPressed: () {
+                    getFileSize();
+                  }, child: const Text("Get file size"))
             ],
           ),
         ),

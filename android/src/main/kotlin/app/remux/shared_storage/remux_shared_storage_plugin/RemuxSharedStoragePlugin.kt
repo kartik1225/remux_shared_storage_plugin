@@ -3,6 +3,7 @@ package app.remux.shared_storage.remux_shared_storage_plugin
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -50,6 +51,15 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
+        } else if (call.method == "getFileSizeFromUri") {
+            this.result = result
+            val fileUri = call.argument<String>("fileUri")
+
+            if (fileUri != null) {
+                getFileSizeFromUri(fileUri)
+            } else {
+                result.error("Invalid arguments", null, null);
+            }
         } else {
             result.notImplemented()
         }
@@ -59,7 +69,10 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         val intent = SharedStorageUtils.getDirectoryPickerIntent()
 
         if (intent != null && activity != null) {
-            activity?.startActivityForResult(intent, SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE)
+            activity?.startActivityForResult(
+                intent,
+                SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE
+            )
         } else if (activity == null) {
             result?.error("Activity is null", null, null)
         } else {
@@ -70,6 +83,19 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
     private fun openFilePicker() {
         val intent = SharedStorageUtils.getFilePickerIntent(FilePickerMode.MULTIPLE)
         activity?.startActivityForResult(intent, SharedStorageUtils.FILE_PICKER_REQUEST_CODE)
+    }
+
+    private fun getFileSizeFromUri(uriString: String) {
+        var fileSize: Long? = null
+        val uri = Uri.parse(uriString)
+        activity?.contentResolver?.query(uri, null, null, null, null)?.use { cursor ->
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst() && sizeIndex != -1) {
+                fileSize = cursor.getLong(sizeIndex)
+            }
+        }
+
+        result?.success(fileSize)
     }
 
     private fun createFile(dirUri: String, fileName: String, mimeType: String) {

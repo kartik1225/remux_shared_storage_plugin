@@ -13,4 +13,8 @@ class RemuxSharedStoragePlugin {
   Future<String?> createFile(String dirUri, String fileName, String mimeType) {
     return RemuxSharedStoragePluginPlatform.instance.createFile(dirUri, fileName, mimeType);
   }
+
+  Future<int?> getFileSizeFromUri(String fileUri) {
+    return RemuxSharedStoragePluginPlatform.instance.getFileSizeFromUri(fileUri);
+  }
 }
