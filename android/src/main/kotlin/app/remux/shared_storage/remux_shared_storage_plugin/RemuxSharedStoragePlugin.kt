@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -96,7 +97,16 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
-        } else{
+        } else if (call.method == "openInExternalApp") {
+            this.result = result
+            val fileUri = call.argument<String>("fileUri")
+
+            if (fileUri != null) {
+                shareFile(activity!!, Uri.parse(fileUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+        } else {
             result.notImplemented()
         }
     }
@@ -217,6 +227,29 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         }
 
         result?.success(directoryName)
+    }
+
+    fun shareFile(context: Context, fileUri: Uri) {
+        // Determine the MIME type of the file
+        val mimeType = context.contentResolver.getType(fileUri)
+
+        // Create the share intent with the determined MIME type
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = mimeType
+            putExtra(Intent.EXTRA_STREAM, fileUri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        // Start the chooser activity to let the user select an app to share the file with
+        val chooser = Intent.createChooser(shareIntent, "Share File")
+        if (shareIntent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(chooser)
+            result?.success(true)
+        } else {
+            Toast.makeText(context, "No app can handle this file", Toast.LENGTH_SHORT).show()
+            result?.success(false)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {

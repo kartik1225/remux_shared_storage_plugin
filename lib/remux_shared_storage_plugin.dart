@@ -34,4 +34,8 @@ class RemuxSharedStoragePlugin {
     final result = await getFileName(fileUri);
     return result?.split('.').first;
   }
+
+  Future<bool> openInExternalApp(String fileUri) {
+    return RemuxSharedStoragePluginPlatform.instance.openInExternalApp(fileUri);
+  }
 }

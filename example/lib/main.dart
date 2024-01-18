@@ -98,12 +98,24 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+
   Future<void> getDirectoryName() async {
     final pickedFile = await _remuxSharedStoragePlugin.openDirectoryPicker();
 
     if (pickedFile != null) {
       final directoryName = await _remuxSharedStoragePlugin.getDirectoryName(pickedFile);
       print("getDirectoryName: $directoryName");
+    } else {
+      print('No file picked');
+    }
+  }
+
+  Future<void> openInExternalApp() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
+
+    if (pickedFile.isNotEmpty) {
+      final result = await _remuxSharedStoragePlugin.openInExternalApp(pickedFile.first);
+      print("openInExternalApp: $result");
     } else {
       print('No file picked');
     }
@@ -133,6 +145,14 @@ class _MyAppState extends State<MyApp> {
                       openFilePicker();
                     },
                     child: const Text("File picker"),
+                  ),
+
+                  // open external app
+                  ElevatedButton(
+                    onPressed: () {
+                      openInExternalApp();
+                    },
+                    child: const Text("Share"),
                   ),
                 ],
               ),
