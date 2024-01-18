@@ -29,4 +29,9 @@ class RemuxSharedStoragePlugin {
   Future<String?> getDirectoryName(String directoryUri) {
     return RemuxSharedStoragePluginPlatform.instance.getDirectoryName(directoryUri);
   }
+
+  Future<String?> getFileNameWithoutExtension(String fileUri) async {
+    final result = await getFileName(fileUri);
+    return result?.split('.').first;
+  }
 }
