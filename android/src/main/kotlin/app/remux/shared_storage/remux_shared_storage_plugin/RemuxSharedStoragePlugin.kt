@@ -207,36 +207,44 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         result?.success(fileName)
     }
 
-    private fun getDirectoryName(context: Context, uri: Uri) {
-        // Check if the URI is a tree URI (directory)
-        val isTreeUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            DocumentsContract.isTreeUri(uri)
-        } else {
-            false
+    private fun getDirectoryName(context: Context, uri: Uri?) {
+        val directoryUri = uri ?: getPersistentDirectoryUri()
+
+        if (directoryUri == null) {
+            result?.error("No directory URI available", null, null)
+            return
         }
 
-        val documentFile = if (isTreeUri) {
-            // If it's a tree URI, use fromTreeUri
-            DocumentFile.fromTreeUri(context, uri)
+        val documentFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && DocumentsContract.isTreeUri(directoryUri)) {
+            DocumentFile.fromTreeUri(context, directoryUri)
         } else {
-            // If it's not a tree URI, it might be a file URI
-            DocumentFile.fromSingleUri(context, uri)
+            DocumentFile.fromSingleUri(context, directoryUri)
         }
 
-        val directoryName = if (documentFile != null) {
-            if (documentFile.isFile) {
+        val directoryName = documentFile?.let { docFile ->
+            if (docFile.isFile) {
                 // If it's a file, get the parent directory's name
-                documentFile.parentFile?.name
+                docFile.parentFile?.name
             } else {
                 // If it's a directory, get the directory's name
-                documentFile.name
+                docFile.name
             }
-        } else {
-            null
         }
 
         result?.success(directoryName)
     }
+
+    private fun getPersistentDirectoryUri(): Uri? {
+        val sharedPrefs = activity?.getSharedPreferences("RemuxSharedStoragePrefs", Context.MODE_PRIVATE)
+        val uriString = sharedPrefs?.getString("directoryUri", null)
+        return if (uriString != null) Uri.parse(uriString) else null
+    }
+
+    private fun persistDirectoryUri(uri: Uri) {
+        val sharedPrefs = activity?.getSharedPreferences("RemuxSharedStoragePrefs", Context.MODE_PRIVATE)
+        sharedPrefs?.edit()?.putString("directoryUri", uri.toString())?.apply()
+    }
+
 
     private fun shareFile(context: Context, fileUri: Uri) {
         // Determine the MIME type of the file
@@ -289,15 +297,12 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             if (resultCode == Activity.RESULT_OK && data?.data != null) {
                 val uri = data.data!!
 
-                // Take persistable URI permission for future access
-
                 val contentResolver = activity?.contentResolver
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 contentResolver?.takePersistableUriPermission(uri, takeFlags)
 
-                // Save the URI for future use if needed
-                // For example, using SharedPreferences
+                persistDirectoryUri(uri)
 
                 result?.success(uri.toString())
                 return true
