@@ -284,48 +284,60 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        // directory picker
-        if (requestCode == SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (data?.data != null) {
+        // Directory picker
+        if (requestCode == SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK && data?.data != null) {
                 val uri = data.data!!
+
+                // Take persistable URI permission for future access
+
+                val contentResolver = activity?.contentResolver
+                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                contentResolver?.takePersistableUriPermission(uri, takeFlags)
+
+                // Save the URI for future use if needed
+                // For example, using SharedPreferences
+
                 result?.success(uri.toString())
-            } else {
+                return true
+            } else if (resultCode == Activity.RESULT_CANCELED) {
                 result?.success(null)
+                return true
             }
-            return true
-        } else if (requestCode == SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_CANCELED) {
-            result?.success(null)
-            return true
         }
 
-        // file picker
-        if (requestCode == SharedStorageUtils.FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (data?.clipData != null) {
-                // Multiple files selected
-                val count = data.clipData!!.itemCount
-                val uris = ArrayList<String>()
-                for (i in 0 until count) {
-                    val uri = data.clipData!!.getItemAt(i).uri
-                    uris.add(uri.toString())
+        // File picker
+        if (requestCode == SharedStorageUtils.FILE_PICKER_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                when {
+                    data?.clipData != null -> {
+                        // Multiple files selected
+                        val count = data.clipData!!.itemCount
+                        val uris = ArrayList<String>()
+                        for (i in 0 until count) {
+                            val uri = data.clipData!!.getItemAt(i).uri
+                            uris.add(uri.toString())
+                        }
+                        result?.success(uris)
+                    }
+                    data?.data != null -> {
+                        // Single file selected
+                        val uri = data.data!!
+                        result?.success(listOf(uri.toString()))
+                    }
+                    else -> result?.success(listOf<String>())
                 }
-
-                result?.success(uris)
-            } else if (data?.data != null) {
-                // Single file selected
-                val uri = data.data!!
-
-                result?.success(listOf(uri.toString()))
-            } else {
+                return true
+            } else if (resultCode == Activity.RESULT_CANCELED) {
                 result?.success(listOf<String>())
+                return true
             }
-            return true
-        } else if (requestCode == SharedStorageUtils.FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_CANCELED) {
-            result?.success(listOf<String>())
-            return true
         }
 
         return false
     }
+
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
