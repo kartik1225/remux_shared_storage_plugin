@@ -97,12 +97,21 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
-        } else if (call.method == "openInExternalApp") {
+        } else if (call.method == "shareFile") {
             this.result = result
             val fileUri = call.argument<String>("fileUri")
 
             if (fileUri != null) {
                 shareFile(activity!!, Uri.parse(fileUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+        } else if (call.method == "openFileWithExternalApp") {
+            this.result = result
+            val fileUri = call.argument<String>("fileUri")
+
+            if (fileUri != null) {
+                openFileWithExternalApp(activity!!, Uri.parse(fileUri))
             } else {
                 result.error("Invalid arguments", null, null)
             }
@@ -229,7 +238,7 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         result?.success(directoryName)
     }
 
-    fun shareFile(context: Context, fileUri: Uri) {
+    private fun shareFile(context: Context, fileUri: Uri) {
         // Determine the MIME type of the file
         val mimeType = context.contentResolver.getType(fileUri)
 
@@ -248,6 +257,28 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             result?.success(true)
         } else {
             Toast.makeText(context, "No app can handle this file", Toast.LENGTH_SHORT).show()
+            result?.success(false)
+        }
+    }
+
+    private fun openFileWithExternalApp(context: Context, fileUri: Uri) {
+        // Determine the MIME type of the file
+        val mimeType = context.contentResolver.getType(fileUri)
+
+        // Create an intent with action view
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(fileUri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission
+        }
+
+        // Check if there's an app that can handle this intent
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+            result?.success(true)
+        } else {
+            // Handle the situation where no app can handle the intent
+            // You might want to show a message to the user
+            Toast.makeText(context, "No app can handle this request", Toast.LENGTH_SHORT).show()
             result?.success(false)
         }
     }

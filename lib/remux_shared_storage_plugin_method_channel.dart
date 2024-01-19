@@ -66,8 +66,16 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
   }
 
   @override
-  Future<bool> openInExternalApp(String fileUri) async {
-    final result = await methodChannel.invokeMethod<bool>('openInExternalApp', <String, dynamic>{
+  Future<bool> shareFile(String fileUri) async {
+    final result = await methodChannel.invokeMethod<bool>('shareFile', <String, dynamic>{
+      'fileUri': fileUri,
+    });
+    return result ?? false;
+  }
+
+  @override
+  Future<bool> openFileWithExternalApp(String fileUri) async {
+    final result = await methodChannel.invokeMethod<bool>('openFileWithExternalApp', <String, dynamic>{
       'fileUri': fileUri,
     });
     return result ?? false;

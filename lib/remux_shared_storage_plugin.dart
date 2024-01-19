@@ -35,7 +35,11 @@ class RemuxSharedStoragePlugin {
     return result?.split('.').first;
   }
 
-  Future<bool> openInExternalApp(String fileUri) {
-    return RemuxSharedStoragePluginPlatform.instance.openInExternalApp(fileUri);
+  Future<bool> shareFile(String fileUri) {
+    return RemuxSharedStoragePluginPlatform.instance.shareFile(fileUri);
+  }
+
+  Future<bool> openFileWithExternalApp(String fileUri) {
+    return RemuxSharedStoragePluginPlatform.instance.openFileWithExternalApp(fileUri);
   }
 }
