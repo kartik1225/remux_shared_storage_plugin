@@ -81,4 +81,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     return result ?? false;
   }
 
+  @override
+  Future<String?> moveFileToDirectory(String fileUri, String directoryUri) async {
+    final result = await methodChannel.invokeMethod<String>('moveFileToDirectory', <String, dynamic>{
+      'fileUri': fileUri,
+      'directoryUri': directoryUri,
+    });
+    return result;
+  }
 }

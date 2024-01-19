@@ -42,4 +42,8 @@ class RemuxSharedStoragePlugin {
   Future<bool> openFileWithExternalApp(String fileUri) {
     return RemuxSharedStoragePluginPlatform.instance.openFileWithExternalApp(fileUri);
   }
+
+  Future<String?> moveFileToDirectory(String fileUri, String directoryUri) {
+    return RemuxSharedStoragePluginPlatform.instance.moveFileToDirectory(fileUri, directoryUri);
+  }
 }

@@ -115,6 +115,16 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
+        } else if (call.method == "moveFileToDirectory") {
+            this.result = result
+            val fileUri = call.argument<String>("fileUri")
+            val directoryUri = call.argument<String>("directoryUri")
+
+            if (fileUri != null && directoryUri != null) {
+                moveFileToDirectory(Uri.parse(fileUri), Uri.parse(directoryUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
         } else {
             result.notImplemented()
         }
@@ -341,6 +351,67 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         }
 
         return false
+    }
+
+    private fun moveFileToDirectory(fileUri: Uri, directoryUri: Uri) {
+        val bufferSize = 1024 * 1024 // 1 MB buffer size
+
+        try {
+            val context = activity ?: return
+            val contentResolver = context.contentResolver
+
+            // Retrieve the file name from the file URI
+            val fileName = getFileNameFromUri(contentResolver, fileUri)
+            if (fileName == null) {
+                result?.error("Error getting file name", null, null)
+                return
+            }
+
+            // Open an InputStream from the file URI
+            contentResolver.openInputStream(fileUri)?.use { inputStream ->
+                // Create a new file in the selected directory
+                val directory = DocumentFile.fromTreeUri(context, directoryUri)
+                val newFile = directory?.createFile("file/*", fileName)
+
+                // Open an OutputStream to the new file and write in chunks
+                newFile?.uri?.let { newFileUri ->
+                    contentResolver.openOutputStream(newFileUri)?.use { outputStream ->
+                        val buffer = ByteArray(bufferSize)
+                        var bytesRead: Int
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            outputStream.write(buffer, 0, bytesRead)
+                        }
+
+                        // File copied, now delete the original file
+                        val originalFile = DocumentFile.fromSingleUri(context, fileUri)
+                        if (originalFile?.delete() == true) {
+                            result?.success(newFileUri.toString())
+                        } else {
+                            result?.error("Error deleting original file", null, null)
+                        }
+                    } ?: run {
+                        result?.error("Error opening output stream", null, null)
+                    }
+                } ?: run {
+                    result?.error("Error creating new file in the directory", null, null)
+                }
+            } ?: run {
+                result?.error("Error opening input stream", null, null)
+            }
+        } catch (e: Exception) {
+            result?.error("Error moving file", e.message, null)
+        }
+    }
+
+    private fun getFileNameFromUri(contentResolver: ContentResolver, fileUri: Uri): String? {
+        var fileName: String? = null
+        contentResolver.query(fileUri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                fileName = cursor.getString(nameIndex)
+            }
+        }
+        return fileName
     }
 
 

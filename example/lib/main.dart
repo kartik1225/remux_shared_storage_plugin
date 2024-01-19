@@ -132,6 +132,18 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> moveFileToDirectory() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
+    final pickedDirectory = await _remuxSharedStoragePlugin.openDirectoryPicker();
+
+    if (pickedFile.isNotEmpty && pickedDirectory != null) {
+      final result = await _remuxSharedStoragePlugin.moveFileToDirectory(pickedFile.first, pickedDirectory);
+      print("moveFileToDirectory: $result");
+    } else {
+      print('No file picked');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -210,6 +222,12 @@ class _MyAppState extends State<MyApp> {
                   openInExternalApp();
                 },
                 child: const Text("Open in external app"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  moveFileToDirectory();
+                },
+                child: const Text("Move file to directory"),
               ),
             ],
           ),

@@ -58,4 +58,8 @@ abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
   Future<bool> openFileWithExternalApp(String fileUri) {
     throw UnimplementedError('openFileWithExternalApp() has not been implemented.');
   }
+
+  Future<String?> moveFileToDirectory(String fileUri, String directoryUri) {
+    throw UnimplementedError('moveFileToDirectory() has not been implemented.');
+  }
 }
