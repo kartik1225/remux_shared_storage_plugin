@@ -434,16 +434,9 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
     private fun copyFileToGallery(fileUri: Uri): String {
         val context = activity ?: return "Application context is null"
 
-        Log.d("copyFileToGallery", "Starting copy process")
-
         try {
-            // Get MIME type of the file
             val mimeType = context.contentResolver.getType(fileUri)
-            Log.d("copyFileToGallery", "MIME type: $mimeType")
-
             val isVideo = mimeType?.startsWith("video") == true
-
-            // Generate URI for the new file in MediaStore
             val fileName = System.currentTimeMillis().toString()
             val mediaContentUri = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
@@ -455,13 +448,7 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                 }
             }
 
-            val outputUri = context.contentResolver.insert(mediaContentUri, values)
-            if (outputUri == null) {
-                Log.e("copyFileToGallery", "Failed to create new MediaStore entry")
-                return "Failed to create new MediaStore entry."
-            }
-
-            Log.d("copyFileToGallery", "Output URI: $outputUri")
+            val outputUri = context.contentResolver.insert(mediaContentUri, values) ?: return "Failed to create new MediaStore entry."
 
             context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
                 context.contentResolver.openOutputStream(outputUri)?.use { outputStream ->
@@ -471,25 +458,16 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                         outputStream.write(buffer, 0, bytesRead)
                     }
                     outputStream.flush()
-                    Log.d("copyFileToGallery", "File copied successfully")
-                } ?: run {
-                    Log.e("copyFileToGallery", "Failed to open output stream")
-                    return "Failed to open output stream."
-                }
-            } ?: run {
-                Log.e("copyFileToGallery", "Failed to open input stream")
-                return "Failed to open input stream."
-            }
+                } ?: return "Failed to open output stream."
+            } ?: return "Failed to open input stream."
 
-            // For Android versions below Q, trigger media scanner
+            // Trigger media scanner only for versions below Android 10
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 MediaScannerConnection.scanFile(context, arrayOf(outputUri.toString()), null, null)
-                Log.d("copyFileToGallery", "Media scanner triggered")
             }
 
             return outputUri.toString()
         } catch (e: IOException) {
-            Log.e("copyFileToGallery", "IOException occurred: ${e.message}")
             return "IOException occurred: ${e.message}"
         }
     }
