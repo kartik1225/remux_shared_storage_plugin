@@ -144,6 +144,17 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> copyFileToGallery() async {
+    final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
+
+    if (pickedFile.isNotEmpty) {
+      final result = await _remuxSharedStoragePlugin.copyFileToGallery(pickedFile.first);
+      print("moveFileToGallery: $result");
+    } else {
+      print('No file picked');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -228,6 +239,12 @@ class _MyAppState extends State<MyApp> {
                   moveFileToDirectory();
                 },
                 child: const Text("Move file to directory"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  copyFileToGallery();
+                },
+                child: const Text("Copy file to gallery"),
               ),
             ],
           ),

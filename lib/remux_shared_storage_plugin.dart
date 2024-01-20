@@ -46,4 +46,8 @@ class RemuxSharedStoragePlugin {
   Future<String?> moveFileToDirectory(String fileUri, String directoryUri) {
     return RemuxSharedStoragePluginPlatform.instance.moveFileToDirectory(fileUri, directoryUri);
   }
+
+  Future<String?> copyFileToGallery(String fileUri) async {
+    return RemuxSharedStoragePluginPlatform.instance.copyFileToGallery(fileUri);
+  }
 }

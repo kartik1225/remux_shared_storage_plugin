@@ -89,4 +89,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result;
   }
+
+  @override
+  Future<String?> copyFileToGallery(String fileUri) async {
+    final result = await methodChannel.invokeMethod<String>('copyFileToGallery', <String, dynamic>{
+      'fileUri': fileUri,
+    });
+    return result;
+  }
 }
