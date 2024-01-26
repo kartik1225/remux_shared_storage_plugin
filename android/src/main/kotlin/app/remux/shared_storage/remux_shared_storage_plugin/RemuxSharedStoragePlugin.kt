@@ -13,7 +13,6 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
-import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
 
@@ -26,8 +25,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 
 
 /** RemuxSharedStoragePlugin */
@@ -85,7 +82,7 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
-        } else if (call.method == "getFileName")  {
+        } else if (call.method == "getFileName") {
             this.result = result
 
             val fileUri = call.argument<String>("fileUri")
@@ -142,6 +139,34 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             } else {
                 result.error("Invalid arguments", null, null)
             }
+        } else if (call.method == "hasPersistableUriPermission") {
+            this.result = result
+            val uriString = call.argument<String>("uriString")
+
+            if (uriString != null) {
+                result.success(hasPersistableUriPermission(uriString))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+        } else if (call.method == "tryTakePersistableUriPermission") {
+            this.result = result
+            val uriString = call.argument<String>("uriString")
+
+            if (uriString != null) {
+                result.success(tryTakePersistableUriPermission(Uri.parse(uriString)))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+        } else if (call.method == "fileUriExists") {
+            this.result = result
+            val uriString = call.argument<String>("uriString")
+
+            if (uriString != null) {
+                result.success(fileUriExists(Uri.parse(uriString), activity!!))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
+
         } else {
             result.notImplemented()
         }
@@ -235,18 +260,21 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
     }
 
     private fun getDirectoryName(context: Context, uri: Uri?) {
-        val directoryUri = uri ?: getPersistentDirectoryUri()
 
-        if (directoryUri == null) {
+        if (uri == null) {
             result?.error("No directory URI available", null, null)
             return
         }
 
-        val documentFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && DocumentsContract.isTreeUri(directoryUri)) {
-            DocumentFile.fromTreeUri(context, directoryUri)
-        } else {
-            DocumentFile.fromSingleUri(context, directoryUri)
-        }
+        val documentFile =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && DocumentsContract.isTreeUri(
+                    uri
+                )
+            ) {
+                DocumentFile.fromTreeUri(context, uri)
+            } else {
+                DocumentFile.fromSingleUri(context, uri)
+            }
 
         val directoryName = documentFile?.let { docFile ->
             if (docFile.isFile) {
@@ -259,17 +287,6 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         }
 
         result?.success(directoryName)
-    }
-
-    private fun getPersistentDirectoryUri(): Uri? {
-        val sharedPrefs = activity?.getSharedPreferences("RemuxSharedStoragePrefs", Context.MODE_PRIVATE)
-        val uriString = sharedPrefs?.getString("directoryUri", null)
-        return if (uriString != null) Uri.parse(uriString) else null
-    }
-
-    private fun persistDirectoryUri(uri: Uri) {
-        val sharedPrefs = activity?.getSharedPreferences("RemuxSharedStoragePrefs", Context.MODE_PRIVATE)
-        sharedPrefs?.edit()?.putString("directoryUri", uri.toString())?.apply()
     }
 
 
@@ -318,18 +335,51 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         }
     }
 
+    private fun hasPersistableUriPermission(uriString: String): Boolean {
+        val uri = Uri.parse(uriString)
+        val uriPermissions = activity?.contentResolver?.persistedUriPermissions
+
+        return uriPermissions?.any { permission ->
+            permission.uri == uri
+        } ?: false
+    }
+
+    private fun tryTakePersistableUriPermission(uri: Uri): Boolean {
+        val contentResolver = activity?.contentResolver
+        val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+        return try {
+            // Attempt to take persistable URI permission
+            contentResolver?.takePersistableUriPermission(uri, takeFlags)
+            true // Successfully took permission
+        } catch (e: SecurityException) {
+            // Failed to take permission
+            false
+        }
+    }
+
+    private fun fileUriExists(uri: Uri, context: Context): Boolean {
+        try {
+            val documentFile = DocumentFile.fromSingleUri(context, uri)
+
+            return documentFile?.exists() ?: false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking if file URI exists: ${e.message}")
+            return false
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        val contentResolver = activity?.contentResolver
+
         // Directory picker
         if (requestCode == SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK && data?.data != null) {
                 val uri = data.data!!
-
-                val contentResolver = activity?.contentResolver
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 contentResolver?.takePersistableUriPermission(uri, takeFlags)
-
-                persistDirectoryUri(uri)
 
                 result?.success(uri.toString())
                 return true
@@ -342,24 +392,26 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         // File picker
         if (requestCode == SharedStorageUtils.FILE_PICKER_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
-                when {
-                    data?.clipData != null -> {
-                        // Multiple files selected
-                        val count = data.clipData!!.itemCount
-                        val uris = ArrayList<String>()
-                        for (i in 0 until count) {
-                            val uri = data.clipData!!.getItemAt(i).uri
-                            uris.add(uri.toString())
-                        }
-                        result?.success(uris)
+                val uris = ArrayList<String>()
+                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+                // Handling multiple file selection
+                data?.clipData?.let { clipData ->
+                    for (i in 0 until clipData.itemCount) {
+                        val uri = clipData.getItemAt(i).uri
+                        contentResolver?.takePersistableUriPermission(uri, takeFlags)
+                        uris.add(uri.toString())
                     }
-                    data?.data != null -> {
-                        // Single file selected
-                        val uri = data.data!!
-                        result?.success(listOf(uri.toString()))
-                    }
-                    else -> result?.success(listOf<String>())
                 }
+
+                // Handling single file selection
+                data?.data?.let { uri ->
+                    contentResolver?.takePersistableUriPermission(uri, takeFlags)
+                    uris.add(uri.toString())
+                }
+
+                result?.success(uris)
                 return true
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 result?.success(listOf<String>())
@@ -438,17 +490,22 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             val mimeType = context.contentResolver.getType(fileUri)
             val isVideo = mimeType?.startsWith("video") == true
             val fileName = System.currentTimeMillis().toString()
-            val mediaContentUri = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val mediaContentUri =
+                if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES)
+                    put(
+                        MediaStore.MediaColumns.RELATIVE_PATH,
+                        if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES
+                    )
                 }
             }
 
-            val outputUri = context.contentResolver.insert(mediaContentUri, values) ?: return "Failed to create new MediaStore entry."
+            val outputUri = context.contentResolver.insert(mediaContentUri, values)
+                ?: return "Failed to create new MediaStore entry."
 
             context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
                 context.contentResolver.openOutputStream(outputUri)?.use { outputStream ->
@@ -471,7 +528,6 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             return "IOException occurred: ${e.message}"
         }
     }
-
 
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

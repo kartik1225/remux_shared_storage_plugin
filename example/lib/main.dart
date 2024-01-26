@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:remux_shared_storage_plugin/remux_shared_storage_plugin.dart';
+import 'package:remux_shared_storage_plugin_example/utils.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,6 +18,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _remuxSharedStoragePlugin = RemuxSharedStoragePlugin();
+  final uriInputController = TextEditingController();
 
   @override
   void initState() {
@@ -91,19 +93,20 @@ class _MyAppState extends State<MyApp> {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
 
     if (pickedFile.isNotEmpty) {
-      final fileName = await _remuxSharedStoragePlugin.getFileName(pickedFile.first);
+      final fileName =
+          await _remuxSharedStoragePlugin.getFileName(pickedFile.first);
       print("getFileName: $fileName");
     } else {
       print('No file picked');
     }
   }
 
-
   Future<void> getDirectoryName() async {
     final pickedFile = await _remuxSharedStoragePlugin.openDirectoryPicker();
 
     if (pickedFile != null) {
-      final directoryName = await _remuxSharedStoragePlugin.getDirectoryName(pickedFile);
+      final directoryName =
+          await _remuxSharedStoragePlugin.getDirectoryName(pickedFile);
       print("getDirectoryName: $directoryName");
     } else {
       print('No file picked');
@@ -114,7 +117,8 @@ class _MyAppState extends State<MyApp> {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
 
     if (pickedFile.isNotEmpty) {
-      final result = await _remuxSharedStoragePlugin.shareFile(pickedFile.first);
+      final result =
+          await _remuxSharedStoragePlugin.shareFile(pickedFile.first);
       print("openInExternalApp: $result");
     } else {
       print('No file picked');
@@ -125,7 +129,8 @@ class _MyAppState extends State<MyApp> {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
 
     if (pickedFile.isNotEmpty) {
-      final result = await _remuxSharedStoragePlugin.openFileWithExternalApp(pickedFile.first);
+      final result = await _remuxSharedStoragePlugin
+          .openFileWithExternalApp(pickedFile.first);
       print("openInExternalApp: $result");
     } else {
       print('No file picked');
@@ -134,10 +139,12 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> moveFileToDirectory() async {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
-    final pickedDirectory = await _remuxSharedStoragePlugin.openDirectoryPicker();
+    final pickedDirectory =
+        await _remuxSharedStoragePlugin.openDirectoryPicker();
 
     if (pickedFile.isNotEmpty && pickedDirectory != null) {
-      final result = await _remuxSharedStoragePlugin.moveFileToDirectory(pickedFile.first, pickedDirectory);
+      final result = await _remuxSharedStoragePlugin.moveFileToDirectory(
+          pickedFile.first, pickedDirectory);
       print("moveFileToDirectory: $result");
     } else {
       print('No file picked');
@@ -148,11 +155,48 @@ class _MyAppState extends State<MyApp> {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
 
     if (pickedFile.isNotEmpty) {
-      final result = await _remuxSharedStoragePlugin.copyFileToGallery(pickedFile.first);
+      final result =
+          await _remuxSharedStoragePlugin.copyFileToGallery(pickedFile.first);
       print("moveFileToGallery: $result");
     } else {
       print('No file picked');
     }
+  }
+
+  Future<void> validateUri() async {
+    final uri = uriInputController.text;
+
+    if (uri.isEmpty) {
+      showToast("Uri is empty");
+      return;
+    }
+
+    final result = await _remuxSharedStoragePlugin.fileUriExists(uri);
+    showToast("Uri exists: $result");
+  }
+
+  Future<void> hasPersistableUriPermission() async {
+    final uri = uriInputController.text;
+
+    if (uri.isEmpty) {
+      showToast("Uri is empty");
+      return;
+    }
+
+    final result = await _remuxSharedStoragePlugin.hasPersistableUriPermission(uri);
+    showToast("Has permission: $result");
+  }
+
+  Future<void> tryTakePersistableUriPermission() async {
+    final uri = uriInputController.text;
+
+    if (uri.isEmpty) {
+      showToast("Uri is empty");
+      return;
+    }
+
+    final result = await _remuxSharedStoragePlugin.tryTakePersistableUriPermission(uri);
+    showToast("Took permission: $result");
   }
 
   @override
@@ -246,10 +290,49 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("Copy file to gallery"),
               ),
+              Column(
+                children: [
+                  TextField(
+                    controller: uriInputController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Uri',
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          validateUri();
+                        },
+                        child: const Text("Exists"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          hasPersistableUriPermission();
+                        },
+                        child: const Text("check perm"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          tryTakePersistableUriPermission();
+                        },
+                        child: const Text("take perm"),
+                      ),
+                    ],
+                  ),
+                ],
+              )
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    uriInputController.dispose();
+    super.dispose();
   }
 }

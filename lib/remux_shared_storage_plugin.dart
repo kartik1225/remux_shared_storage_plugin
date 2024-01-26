@@ -50,4 +50,16 @@ class RemuxSharedStoragePlugin {
   Future<String?> copyFileToGallery(String fileUri) async {
     return RemuxSharedStoragePluginPlatform.instance.copyFileToGallery(fileUri);
   }
+
+  Future<bool> hasPersistableUriPermission(String uriString) {
+    return RemuxSharedStoragePluginPlatform.instance.hasPersistableUriPermission(uriString);
+  }
+
+  Future<bool> tryTakePersistableUriPermission(String uriString) {
+    return RemuxSharedStoragePluginPlatform.instance.tryTakePersistableUriPermission(uriString);
+  }
+
+  Future<bool> fileUriExists(String uriString) {
+    return RemuxSharedStoragePluginPlatform.instance.fileUriExists(uriString);
+  }
 }

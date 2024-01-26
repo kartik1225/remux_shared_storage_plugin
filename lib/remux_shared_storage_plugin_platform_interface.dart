@@ -66,4 +66,19 @@ abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
   Future<String?> copyFileToGallery(String fileUri) {
     throw UnimplementedError('copyFileToGallery() has not been implemented.');
   }
+
+  // hasPersistableUriPermission
+  Future<bool> hasPersistableUriPermission(String uriString) {
+    throw UnimplementedError('hasPersistableUriPermission() has not been implemented.');
+  }
+
+  // tryTakePersistableUriPermission
+  Future<bool> tryTakePersistableUriPermission(String uriString) {
+    throw UnimplementedError('tryTakePersistableUriPermission() has not been implemented.');
+  }
+
+  // uriExists
+  Future<bool> fileUriExists(String uriString) {
+    throw UnimplementedError('uriExists() has not been implemented.');
+  }
 }

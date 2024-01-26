@@ -24,17 +24,18 @@ class SharedStorageUtils {
         }
 
         fun getFilePickerIntent(mode: FilePickerMode): Intent {
-            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
             intent.addCategory(Intent.CATEGORY_OPENABLE)
             intent.type = "*/*"
             if (mode == FilePickerMode.MULTIPLE) {
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            } else {
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
             }
+
+            // Set flags for persistable URI permission
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
 
             return intent
         }
-
     }
 }

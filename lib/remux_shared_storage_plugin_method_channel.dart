@@ -97,4 +97,28 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result;
   }
+
+  @override
+  Future<bool> hasPersistableUriPermission(String uriString) async {
+    final result = await methodChannel.invokeMethod<bool>('hasPersistableUriPermission', <String, dynamic>{
+      'uriString': uriString,
+    });
+    return result ?? false;
+  }
+
+  @override
+  Future<bool> tryTakePersistableUriPermission(String uriString) async {
+    final result = await methodChannel.invokeMethod<bool>('tryTakePersistableUriPermission', <String, dynamic>{
+      'uriString': uriString,
+    });
+    return result ?? false;
+  }
+
+  @override
+  Future<bool> fileUriExists(String uriString) async {
+    final result = await methodChannel.invokeMethod<bool>('fileUriExists', <String, dynamic>{
+      'uriString': uriString,
+    });
+    return result ?? false;
+  }
 }
