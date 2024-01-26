@@ -206,15 +206,32 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
     }
 
     private fun createFile(dirUri: String, fileName: String, mimeType: String) {
-        if (activity != null) {
-            val pickedDir = DocumentFile.fromTreeUri(activity!!, Uri.parse(dirUri))
+        val activityContext = activity
+        if (activityContext != null) {
+            val pickedDir = DocumentFile.fromTreeUri(activityContext, Uri.parse(dirUri))
             val newFile = pickedDir?.createFile(mimeType, fileName)
-            val newFileUri = newFile?.uri.toString()
-            result?.success(newFileUri)
+            val newFileUri = newFile?.uri
+
+            // Check if new file URI is not null and take persistable URI permission if needed
+            if (newFileUri != null) {
+                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                try {
+                    // Attempt to take persistable permissions
+                    activityContext.contentResolver.takePersistableUriPermission(newFileUri, takeFlags)
+                } catch (e: SecurityException) {
+                    // Handle the exception if persistable permissions can't be taken
+                    Log.e(TAG, "Error taking persistable URI permission: ${e.message}")
+                }
+                result?.success(newFileUri.toString())
+            } else {
+                result?.error("File creation failed", null, null)
+            }
         } else {
             result?.error("Activity is null", null, null)
         }
     }
+
 
     private fun getUniqueFileName(directoryUri: Uri, fileName: String, fileExtension: String) {
         val context = activity
