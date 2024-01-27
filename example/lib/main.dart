@@ -65,9 +65,10 @@ class _MyAppState extends State<MyApp> {
   Future<void> getFileSize() async {
     final pickedFile = await _remuxSharedStoragePlugin.openFilePicker();
 
+    print("uri: $pickedFile");
+
     if (pickedFile.isNotEmpty) {
-      final fileSize =
-          await _remuxSharedStoragePlugin.getFileSizeFromUri(pickedFile.first);
+      final fileSize = await _remuxSharedStoragePlugin.getFileSizeFromUri(pickedFile.first);
       print("fileSize $fileSize");
     } else {
       print('No file picked');

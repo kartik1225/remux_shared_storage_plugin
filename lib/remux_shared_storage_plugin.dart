@@ -62,4 +62,8 @@ class RemuxSharedStoragePlugin {
   Future<bool> fileUriExists(String uriString) {
     return RemuxSharedStoragePluginPlatform.instance.fileUriExists(uriString);
   }
+
+  Future<bool> deleteFileFromUri(String fileUri) {
+    return RemuxSharedStoragePluginPlatform.instance.deleteFileFromUri(fileUri);
+  }
 }

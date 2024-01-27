@@ -121,4 +121,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result ?? false;
   }
+
+  @override
+  Future<bool> deleteFileFromUri(String fileUri) async {
+    final result = await methodChannel.invokeMethod<bool>('deleteFileFromUri', <String, dynamic>{
+      'fileUri': fileUri,
+    });
+    return result ?? false;
+  }
 }

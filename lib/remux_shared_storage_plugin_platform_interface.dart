@@ -81,4 +81,9 @@ abstract class RemuxSharedStoragePluginPlatform extends PlatformInterface {
   Future<bool> fileUriExists(String uriString) {
     throw UnimplementedError('uriExists() has not been implemented.');
   }
+
+  // deleteFileFromUri
+  Future<bool> deleteFileFromUri(String fileUri) {
+    throw UnimplementedError('deleteFileFromUri() has not been implemented.');
+  }
 }

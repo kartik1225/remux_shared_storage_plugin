@@ -167,6 +167,15 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                 result.error("Invalid arguments", null, null)
             }
 
+        } else if (call.method == "deleteFileFromUri") {
+            this.result = result
+            val fileUri = call.argument<String>("fileUri")
+
+            if (fileUri != null) {
+                result.success(deleteFileFromUri(fileUri))
+            } else {
+                result.error("Invalid arguments", null, null)
+            }
         } else {
             result.notImplemented()
         }
@@ -177,8 +186,7 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
 
         if (intent != null && activity != null) {
             activity?.startActivityForResult(
-                intent,
-                SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE
+                intent, SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE
             )
         } else if (activity == null) {
             result?.error("Activity is null", null, null)
@@ -214,11 +222,13 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
 
             // Check if new file URI is not null and take persistable URI permission if needed
             if (newFileUri != null) {
-                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                val takeFlags: Int =
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 try {
                     // Attempt to take persistable permissions
-                    activityContext.contentResolver.takePersistableUriPermission(newFileUri, takeFlags)
+                    activityContext.contentResolver.takePersistableUriPermission(
+                        newFileUri, takeFlags
+                    )
                 } catch (e: SecurityException) {
                     // Handle the exception if persistable permissions can't be taken
                     Log.e(TAG, "Error taking persistable URI permission: ${e.message}")
@@ -363,8 +373,8 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
 
     private fun tryTakePersistableUriPermission(uri: Uri): Boolean {
         val contentResolver = activity?.contentResolver
-        val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        val takeFlags: Int =
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
         return try {
             // Attempt to take persistable URI permission
@@ -387,6 +397,20 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         }
     }
 
+    private fun deleteFileFromUri(fileUriString: String): Boolean {
+        val fileUri = Uri.parse(fileUriString)
+        val context = activity ?: return false
+
+        return try {
+            val documentFile = DocumentFile.fromSingleUri(context, fileUri)
+            documentFile?.delete() ?: false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting file: ${e.message}")
+            false
+        }
+    }
+
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         val contentResolver = activity?.contentResolver
 
@@ -394,8 +418,8 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         if (requestCode == SharedStorageUtils.DIRECTORY_PICKER_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK && data?.data != null) {
                 val uri = data.data!!
-                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                val takeFlags: Int =
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 contentResolver?.takePersistableUriPermission(uri, takeFlags)
 
                 result?.success(uri.toString())
@@ -410,8 +434,8 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
         if (requestCode == SharedStorageUtils.FILE_PICKER_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 val uris = ArrayList<String>()
-                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                val takeFlags: Int =
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
                 // Handling multiple file selection
                 data?.clipData?.let { clipData ->
