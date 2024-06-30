@@ -603,6 +603,11 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                 return
             }
 
+            // Ensure the file is readable
+            if (!destinationFile.setReadable(true, false)) {
+                Log.w(TAG, "Failed to set file as readable")
+            }
+
             result.success(destinationFile.absolutePath)
         } catch (e: IOException) {
             result.error("IO Exception", "Error copying file to cache: ${e.message}", null)
@@ -612,7 +617,6 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             result.error("Unknown Exception", "Error: ${e.message}", null)
         }
     }
-
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
