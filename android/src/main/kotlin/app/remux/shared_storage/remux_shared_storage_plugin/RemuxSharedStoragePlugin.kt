@@ -608,6 +608,10 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                 Log.w(TAG, "Failed to set file as readable")
             }
 
+            // Log the file size
+            val fileSize = destinationFile.length()
+            Log.i(TAG, "File copied to cache. Size: $fileSize bytes")
+
             result.success(destinationFile.absolutePath)
         } catch (e: IOException) {
             result.error("IO Exception", "Error copying file to cache: ${e.message}", null)
