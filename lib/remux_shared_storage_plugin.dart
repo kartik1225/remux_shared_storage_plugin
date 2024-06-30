@@ -66,4 +66,9 @@ class RemuxSharedStoragePlugin {
   Future<bool> deleteFileFromUri(String fileUri) {
     return RemuxSharedStoragePluginPlatform.instance.deleteFileFromUri(fileUri);
   }
+
+  Future<String?> copyFileToCache(String contentUri) {
+    return RemuxSharedStoragePluginPlatform.instance.copyFileToCache(contentUri);
+  }
+
 }

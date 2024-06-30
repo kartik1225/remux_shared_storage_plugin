@@ -129,4 +129,12 @@ class MethodChannelRemuxSharedStoragePlugin extends RemuxSharedStoragePluginPlat
     });
     return result ?? false;
   }
+
+  @override
+  Future<String?> copyFileToCache(String contentUri) async {
+    final result = await methodChannel.invokeMethod<String>('copyFileToCache', <String, dynamic>{
+      'contentUri': contentUri,
+    });
+    return result;
+  }
 }

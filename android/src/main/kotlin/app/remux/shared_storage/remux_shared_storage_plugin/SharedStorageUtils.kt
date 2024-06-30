@@ -37,5 +37,14 @@ class SharedStorageUtils {
 
             return intent
         }
+
+        fun getVideoPickerIntent(): Intent {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "video/*"
+
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+            return intent
+        }
     }
 }

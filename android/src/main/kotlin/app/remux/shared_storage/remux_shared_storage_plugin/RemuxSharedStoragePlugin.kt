@@ -24,6 +24,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+import java.io.File
 import java.io.IOException
 
 
@@ -175,6 +176,13 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
                 result.success(deleteFileFromUri(fileUri))
             } else {
                 result.error("Invalid arguments", null, null)
+            }
+        } else if (call.method == "copyFileToCache") {
+            val contentUri = call.argument<String>("contentUri")
+            if (contentUri != null) {
+                copyFileToCache(Uri.parse(contentUri), result)
+            } else {
+                result.error("Invalid arguments", "Content URI is required", null)
             }
         } else {
             result.notImplemented()
@@ -567,6 +575,41 @@ class RemuxSharedStoragePlugin : FlutterPlugin, MethodCallHandler,
             return outputUri.toString()
         } catch (e: IOException) {
             return "IOException occurred: ${e.message}"
+        }
+    }
+
+    private fun copyFileToCache(contentUri: Uri, result: Result) {
+        val context = activity ?: run {
+            result.error("No activity", "Activity is null", null)
+            return
+        }
+
+        try {
+            val contentResolver = context.contentResolver
+            val fileName = getFileNameFromUri(contentResolver, contentUri) ?: run {
+                result.error("File name error", "Unable to get file name", null)
+                return
+            }
+
+            val cacheDir = context.cacheDir
+            val destinationFile = File(cacheDir, fileName)
+
+            contentResolver.openInputStream(contentUri)?.use { inputStream ->
+                destinationFile.outputStream().use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            } ?: run {
+                result.error("Input stream error", "Unable to open input stream", null)
+                return
+            }
+
+            result.success(destinationFile.absolutePath)
+        } catch (e: IOException) {
+            result.error("IO Exception", "Error copying file to cache: ${e.message}", null)
+        } catch (e: SecurityException) {
+            result.error("Security Exception", "Permission denied: ${e.message}", null)
+        } catch (e: Exception) {
+            result.error("Unknown Exception", "Error: ${e.message}", null)
         }
     }
 
